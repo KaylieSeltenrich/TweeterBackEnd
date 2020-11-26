@@ -6,7 +6,6 @@ import random
 import string
 from flask_cors import CORS
 
-
 app = Flask(__name__)
 CORS(app)
 
@@ -91,22 +90,67 @@ def users():
         user_bio = request.json.get("bio")
         user_password = request.json.get("password")
         user_birthdate = request.json.get("birthdate")
-        user_id = request.json.get("userId")
+        user_logintoken = request.json.get("loginToken")
         rows = None
 
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
+            cursor.execute("SELECT userId FROM user_session WHERE loginToken=?",[user_logintoken,])
+            user = cursor.fetchone()
+            
             if user_username != "" and user_username != None:
-                cursor.execute("UPDATE user SET username=? WHERE userId=?", [user_username,user_id,])
+                cursor.execute("UPDATE user SET username=? WHERE userId=?", [user_username,user[0],])
             if user_email != "" and user_email != None:
-                cursor.execute("UPDATE user SET email=? WHERE userId=?", [user_email,user_id,])
+                cursor.execute("UPDATE user SET email=? WHERE userId=?", [user_email,user[0],])
             if user_bio != "" and user_bio != None:
-                cursor.execute("UPDATE user SET bio=? WHERE userId=?", [user_bio,user_id,])
+                cursor.execute("UPDATE user SET bio=? WHERE userId=?", [user_bio,user[0],])
             if user_password != "" and user_password != None:
-                cursor.execute("UPDATE user SET password=? WHERE userId=?", [user_password,user_id,])
+                cursor.execute("UPDATE user SET password=? WHERE userId=?", [user_password,user[0],])
             if user_birthdate != "" and user_birthdate != None:
-                cursor.execute("UPDATE user SET birthdate=? WHERE userId=?", [user_birthdate,user_id,])
+                cursor.execute("UPDATE user SET birthdate=? WHERE userId=?", [user_birthdate,user[0],])
+            conn.commit()
+            rows = cursor.rowcount
+            print(rows)
+            cursor.execute("SELECT * FROM user WHERE userId=?", [user[0],])
+            
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if cursor != None:
+                cursor.close()
+            if conn != None:
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                user_information = {
+                    "userId": userId,
+                    "email":  user_email,
+                    "username": user_username,
+                    "password": user_password,
+                    "bio": user_bio,
+                    "birthdate": user_birthdate,
+                }
+                return Response(json.dumps(user_information, default=str), mimetype="application/json", status=200)
+            else:
+                return Response("Updating User Failed", mimetype="text/html", status=500)
+
+    
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        user_password = request.json.get("password")
+        user_logintoken = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT userId FROM user_session WHERE loginToken=?",[user_logintoken,])
+            user = cursor.fetchone()
+            cursor.execute("DELETE FROM user WHERE password=? AND userId=?",[user_password,user[0],])
             conn.commit()
             rows = cursor.rowcount
 
@@ -120,8 +164,10 @@ def users():
                 conn.rollback()
                 conn.close()
             if(rows == 1):
-                return Response("Updated User Successfully!", mimetype ="text/html", status=204)
+                return Response("Deleted User Successfully!", mimetype="text/html", status=204)
             else:
-                return Response("Updating User Failed", mimetype="text/html", status=500)
+                return Response("Deleting User Failed", mimetype="text/html", status=500)
+
+
     
     
