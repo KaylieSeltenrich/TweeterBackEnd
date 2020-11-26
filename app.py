@@ -21,12 +21,19 @@ def users():
         conn = None
         cursor = None
         users = None
+        user_id = request.args.get("userId")
+    
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM user")
-            users = cursor.fetchall()
-
+            if(user_id == None):
+                cursor.execute("SELECT * FROM user")
+                users = cursor.fetchall()
+            else: 
+                cursor.execute("SELECT * FROM user WHERE userId=?",[user_id,])
+                users = cursor.fetchall()
+           
+          
         except Exception as error:
             print("Something went wrong (this is lazy): ")
             print(error)
@@ -179,10 +186,19 @@ def login():
         conn = None
         cursor = None
         rows = None
+        user_password = request.json.get("password")
+        user_email = request.json.get("email")
     try:
         conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
         cursor = conn.cursor()
-        cursor.execute()
+        token_result = createLoginToken()
+        cursor.execute("SELECT userId FROM user WHERE email=? AND password=?",[user_email,user_password,])
+        user = cursor.fetchall()
+        if(len(user) == 1):
+            cursor.execute("INSERT INTO user_session(loginToken) VALUES(?)", [token_result,])
+        conn.commit()
+        rows = cursor.rowcount
+        
     except Exception as error:
         print("Something went wrong: ")
         print(error)
@@ -193,9 +209,9 @@ def login():
             conn.rollback()
             conn.close()
         if(rows == 1):
-            return Response("Deleted User Successfully!", mimetype="text/html", status=204)
+            return Response("Login Success!", mimetype="text/html", status=204)
         else:
-            return Response("Deleting User Failed", mimetype="text/html", status=500)
+            return Response("Login User Failed.", mimetype="text/html", status=500)
  
     
     
