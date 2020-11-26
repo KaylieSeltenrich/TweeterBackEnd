@@ -6,8 +6,14 @@ import random
 import string
 from flask_cors import CORS
 
+def createLoginToken():
+    letters = string.ascii_letters
+    token_result = ''.join(random.choice(letters) for i in range(20))
+    return token_result
+
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route('/api/users', methods=['GET','POST','PATCH','DELETE'])
 def users():
@@ -52,8 +58,7 @@ def users():
             rows = cursor.rowcount
             
             if(rows == 1):
-                letters = string.ascii_letters
-                token_result = ''.join(random.choice(letters) for i in range(20))
+                token_result = createLoginToken()
                 userId = cursor.lastrowid
                 cursor.execute("INSERT INTO user_session(loginToken,userId) VALUES (?,?)", [token_result, userId,])
                 conn.commit()
@@ -168,6 +173,29 @@ def users():
             else:
                 return Response("Deleting User Failed", mimetype="text/html", status=500)
 
-
+@app.route('/api/login', methods=['POST','DELETE'])
+def login():
+    if request.method == 'POST':
+        conn = None
+        cursor = None
+        rows = None
+    try:
+        conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+        cursor = conn.cursor()
+        cursor.execute()
+    except Exception as error:
+        print("Something went wrong: ")
+        print(error)
+    finally:
+        if cursor != None:
+            cursor.close()
+        if conn != None:
+            conn.rollback()
+            conn.close()
+        if(rows == 1):
+            return Response("Deleted User Successfully!", mimetype="text/html", status=204)
+        else:
+            return Response("Deleting User Failed", mimetype="text/html", status=500)
+ 
     
     
