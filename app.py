@@ -15,7 +15,7 @@ def createLoginToken():
 app = Flask(__name__)
 CORS(app)
 
-
+###################### USERS END POINT ######################
 @app.route('/api/users', methods=['GET','POST','PATCH','DELETE'])
 def users():
     if request.method == 'GET':
@@ -180,6 +180,7 @@ def users():
             else:
                 return Response("Deleting User Failed", mimetype="text/html", status=500)
 
+###################### LOGIN END POINT ######################
 @app.route('/api/login', methods=['POST','DELETE'])
 def login():
     if request.method == 'POST':
@@ -242,6 +243,7 @@ def login():
             else:
                 return Response("Logging Out Failed.", mimetype="text/html", status=500)
 
+###################### TWEETS END POINT ######################
 @app.route('/api/tweets', methods=['GET','POST','PATCH','DELETE'])
 def tweets():
     if request.method == 'GET':
@@ -326,10 +328,8 @@ def tweets():
             cursor = conn.cursor() 
             cursor.execute("SELECT userId FROM user_session WHERE loginToken=?", [login_token,])
             user = cursor.fetchall()[0][0]
-            print(user)
             cursor.execute("SELECT userId FROM tweet WHERE tweetId=?", [tweet_id,])
             tweet_owner = cursor.fetchall()[0][0]
-            print(tweet_owner)
             if(user == tweet_owner):
                 cursor.execute("UPDATE tweet SET content=? WHERE tweetId=?", [tweet_content,tweet_id,])
                 conn.commit()
@@ -355,6 +355,46 @@ def tweets():
                 return Response(json.dumps(tweet_information, default=str), mimetype="application/json", status=200)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
+
+
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        login_token = request.json.get("loginToken")
+        tweet_id = request.json.get("tweetId")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT userId FROM user_session WHERE loginToken=?", [login_token,])
+            user = cursor.fetchall()[0][0]
+            cursor.execute("SELECT userId FROM tweet WHERE tweetId=?", [tweet_id,])
+            tweet_owner = cursor.fetchall()[0][0]
+            if(user == tweet_owner):
+                cursor.execute("DELETE FROM tweet WHERE tweetId=?", [tweet_id,])
+                conn.commit()
+                rows = cursor.rowcount
+                tweetId = cursor.lastrowid
+            else:
+                print("Unable to delete tweet.")
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Tweet Deleted Succesfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Tweet not Deleted!", mimetype="text/html", status=500)
+
+
+
 
 
 
