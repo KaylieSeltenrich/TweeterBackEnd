@@ -186,32 +186,64 @@ def login():
         conn = None
         cursor = None
         rows = None
-        user_password = request.json.get("password")
+        user = None
         user_email = request.json.get("email")
-    try:
-        conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
-        cursor = conn.cursor()
+        user_password = request.json.get("password")
         token_result = createLoginToken()
-        cursor.execute("SELECT userId FROM user WHERE email=? AND password=?",[user_email,user_password,])
-        user = cursor.fetchall()
-        if(len(user) == 1):
-            cursor.execute("INSERT INTO user_session(loginToken) VALUES(?)", [token_result,])
-        conn.commit()
-        rows = cursor.rowcount
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT userId, email, password FROM user WHERE email=? AND password=?",[user_email,user_password,])
+            user = cursor.fetchall()
+            if(len(user) == 1):
+                cursor.execute("INSERT INTO user_session(loginToken, userId) VALUES(?,?)", [token_result,user[0][0]])
+                conn.commit()
+                rows = cursor.rowcount
         
-    except Exception as error:
-        print("Something went wrong: ")
-        print(error)
-    finally:
-        if cursor != None:
-            cursor.close()
-        if conn != None:
-            conn.rollback()
-            conn.close()
-        if(rows == 1):
-            return Response("Login Success!", mimetype="text/html", status=204)
-        else:
-            return Response("Login User Failed.", mimetype="text/html", status=500)
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if cursor != None:
+                cursor.close()
+            if conn != None:
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response(json.dumps(user, default=str), mimetype="application/json", status=204)
+            else:
+                return Response("Login User Failed.", mimetype="text/html", status=500)
+
+    if request.method == 'DELETE':
+        conn = None
+        cursor = None
+        rows = None
+        user = None
+        user_loginToken = request.json.get("loginToken")
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM user_session WHERE loginToken=?",[user_loginToken,])
+            conn.commit()
+            rows = cursor.rowcount
+            print(rows)
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if cursor != None:
+                cursor.close()
+            if conn != None:
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Logged Out Succesfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Logging Out Failed.", mimetype="text/html", status=500)
+
+
+
  
     
     
