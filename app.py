@@ -33,7 +33,6 @@ def users():
                 cursor.execute("SELECT * FROM user WHERE userId=?",[user_id,])
                 users = cursor.fetchall()
            
-          
         except Exception as error:
             print("Something went wrong (this is lazy): ")
             print(error)
@@ -125,8 +124,9 @@ def users():
             rows = cursor.rowcount
             print(rows)
             cursor.execute("SELECT * FROM user WHERE userId=?", [user[0],])
-            
+            user = cursor.fetchone()
 
+           
         except Exception as error:
             print("Something went wrong: ")
             print(error)
@@ -138,12 +138,11 @@ def users():
                 conn.close()
             if(rows == 1):
                 user_information = {
-                    "userId": userId,
-                    "email":  user_email,
-                    "username": user_username,
-                    "password": user_password,
-                    "bio": user_bio,
-                    "birthdate": user_birthdate,
+                    "userId": user[5],
+                    "email": user[1],
+                    "username": user[0],
+                    "bio": user[2],
+                    "birthdate": user[3]
                 }
                 return Response(json.dumps(user_information, default=str), mimetype="application/json", status=200)
             else:
@@ -241,6 +240,72 @@ def login():
                 return Response("Logged Out Succesfully!", mimetype="text/html", status=204)
             else:
                 return Response("Logging Out Failed.", mimetype="text/html", status=500)
+
+@app.route('/api/tweets', methods=['GET','POST','PATCH','DELETE'])
+def tweets():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        tweets = None
+        user_id = request.args.get("userId")
+    
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            if(user_id == None):
+                cursor.execute("SELECT * FROM tweet")
+                tweets = cursor.fetchall()
+            else: 
+                cursor.execute("SELECT * FROM tweet WHERE userId=?",[user_id,])
+                tweets = cursor.fetchall()
+           
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(users != None):
+                return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+    
+    elif request.method == 'POST':
+        conn = None
+        cursor = None
+        tweet_content = request.json.get("content")
+        login_token = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            
+            cursor.execute("INSERT INTO tweet(content,userId) VALUES (?)", [tweet_content,])
+            rows = cursor.rowcount
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+               
+                return Response(json.dumps(user_information, default=str), mimetype="application/json", status=201)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+
+
+
+
+
 
 
 
