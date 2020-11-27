@@ -279,7 +279,7 @@ def tweets():
         cursor = None
         tweet_content = request.json.get("content")
         login_token = request.json.get("loginToken")
-        createdAt = datetime.datetime.now()
+        createdAt = datetime.datetime.now().strftime("%Y-%m-%d")
         rows = None
 
         try:
@@ -313,10 +313,48 @@ def tweets():
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
+    elif request.method == 'PATCH':
+        conn = None
+        cursor = None
+        tweet_content = request.json.get("content")
+        login_token = request.json.get("loginToken")
+        tweet_id = request.json.get("tweetId")
+        rows = None
 
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT userId FROM user_session WHERE loginToken=?", [login_token,])
+            user = cursor.fetchall()[0][0]
+            print(user)
+            cursor.execute("SELECT userId FROM tweet WHERE tweetId=?", [tweet_id,])
+            tweet_owner = cursor.fetchall()[0][0]
+            print(tweet_owner)
+            if(user == tweet_owner):
+                cursor.execute("UPDATE tweet SET content=? WHERE tweetId=?", [tweet_content,tweet_id,])
+                conn.commit()
+                rows = cursor.rowcount
+                tweetId = cursor.lastrowid
+            else:
+                print("Unable to update tweet")
 
-
-
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                tweet_information = {
+                    "tweetId": tweet_id,
+                    "content": tweet_content,
+                }
+                return Response(json.dumps(tweet_information, default=str), mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
 
 
 
