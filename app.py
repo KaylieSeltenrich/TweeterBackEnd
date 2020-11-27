@@ -4,6 +4,7 @@ import json
 import dbcreds
 import random
 import string
+import datetime
 from flask_cors import CORS
 
 def createLoginToken():
@@ -278,14 +279,18 @@ def tweets():
         cursor = None
         tweet_content = request.json.get("content")
         login_token = request.json.get("loginToken")
+        createdAt = datetime.datetime.now()
         rows = None
 
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
-            cursor = conn.cursor()
-            
-            cursor.execute("INSERT INTO tweet(content,userId) VALUES (?)", [tweet_content,])
+            cursor = conn.cursor() 
+            cursor.execute("SELECT us.userId, u.username FROM user_session us INNER JOIN user u ON us.userId=u.userId WHERE loginToken=?",[login_token,])
+            user = cursor.fetchone()
+            cursor.execute("INSERT INTO tweet(content,userId) VALUES (?,?)", [tweet_content,user[0],])
+            conn.commit()
             rows = cursor.rowcount
+            tweetId = cursor.lastrowid
 
         except Exception as error:
             print("Something went wrong: ")
@@ -297,8 +302,14 @@ def tweets():
                 conn.rollback()
                 conn.close()
             if(rows == 1):
-               
-                return Response(json.dumps(user_information, default=str), mimetype="application/json", status=201)
+                tweet_information = {
+                    "content": tweet_content,
+                    "createdAt": createdAt,
+                    "username": user[1],
+                    "userId": user[0],
+                    "tweetId": tweetId,
+                }
+                return Response(json.dumps(tweet_information, default=str), mimetype="application/json", status=201)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
