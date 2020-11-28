@@ -44,7 +44,16 @@ def users():
                 conn.rollback()
                 conn.close()
             if(users != None):
-                return Response(json.dumps(users, default=str), mimetype="application/json", status=200)
+                users_info = []
+                for user in users:
+                    users_info.append({
+                        "userId": user[5],
+                        "email": user[1],
+                        "username": user[0],
+                        "bio": user[2],
+                        "birthdate": user[4],})
+
+                return Response(json.dumps(users_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
@@ -256,10 +265,11 @@ def tweets():
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
             if(user_id == None):
-                cursor.execute("SELECT * FROM tweet")
+                cursor.execute("SELECT user.username, t.content, t.createdAt, t.tweetId, t.userId FROM user INNER JOIN tweet t ON user.userId=t.userId")
                 tweets = cursor.fetchall()
+                print(tweets)
             else: 
-                cursor.execute("SELECT * FROM tweet WHERE userId=?",[user_id,])
+                cursor.execute("SELECT user.username, t.content, t.createdAt, t.tweetId, t.userId FROM user INNER JOIN tweet t ON user.userId=t.userId WHERE user.userId=?", [user_id,])
                 tweets = cursor.fetchall()
            
         except Exception as error:
@@ -271,8 +281,18 @@ def tweets():
             if(conn != None):
                 conn.rollback()
                 conn.close()
-            if(users != None):
-                return Response(json.dumps(tweets, default=str), mimetype="application/json", status=200)
+            if(tweets != None):
+                tweets_info = []
+                for tweet in tweets:
+                    tweets_info.append({
+                        "tweetId": tweet[3],
+                        "userId": tweet[4],
+                        "username": tweet[0],
+                        "content": tweet[1],
+                        "createdAt": tweet[2],
+                        })
+
+                return Response(json.dumps(tweets_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
     
@@ -393,11 +413,63 @@ def tweets():
             else:
                 return Response("Tweet not Deleted!", mimetype="text/html", status=500)
 
+###################### FOLLOWS END POINT ######################
 
+@app.route('/api/follows', methods=['GET','POST','DELETE'])
+def follows():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        follows = None
+        user_id = request.args.get("userId")
+        
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.followId WHERE follow.userId=?", [user_id,])
+            follows = cursor.fetchall()
+            print(follows)
 
-
-
-
- 
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+            
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(follows != None):
+                return Response(json.dumps(follows, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
     
+    # elif request.method == 'POST':
+    #     conn = None
+    #     cursor = None
+    #     login_token = request.json.get("loginToken")
+    #     rows = None
+
+    #     try:
+    #         conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+    #         cursor = conn.cursor()
+    #         cursor.execute("SELECT us.loginToken FROM user_session us INNER JOIN follow ON us.userId=follow.followId WHERE loginToken=?",[login_token,])
+    #         follow = cursor.fetchone()
+    #         cursor.execute("SELECT ",[])
+
+    #     except Exception as error:
+    #         print("Something went wrong: ")
+    #         print(error)
+    #     finally:
+    #         if(cursor != None):
+    #             cursor.close()
+    #         if(conn != None):
+    #             conn.rollback()
+    #             conn.close()
+    #         if(rows == 1):
+    #             return Response("Followed user succesfully!", mimetype="text/html", status=204)
+    #         else:
+    #             return Response("Something went wrong!", mimetype="text/html", status=500)
+
     
