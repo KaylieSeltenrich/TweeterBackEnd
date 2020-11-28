@@ -197,24 +197,20 @@ def login():
         cursor = None
         rows = None
         user = None
-        user_username = request.json.get("username")
-        user_birthdate = request.json.get("birthdate")
-        user_bio = request.json.get("bio")
         user_email = request.json.get("email")
         user_password = request.json.get("password")
         token_result = createLoginToken()
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT userId, email, password FROM user WHERE email=? AND password=?",[user_email,user_password,])
+            cursor.execute("SELECT userId, email, password, bio, birthdate, username FROM user WHERE email=? AND password=?",[user_email,user_password,])
             user = cursor.fetchall()
         
             if(len(user) == 1):
-                cursor.execute("INSERT INTO user_session(loginToken, userId) VALUES(?,?)", [token_result,user[0][0]])
+                cursor.execute("INSERT INTO user_session(loginToken, userId) VALUES(?,?)", [token_result,user[0][0],])
                 conn.commit()
                 rows = cursor.rowcount
                 
-        
         except Exception as error:
             print("Something went wrong: ")
             print(error)
@@ -227,13 +223,13 @@ def login():
             if(rows == 1):
                 user_info = {
                     "userId": user[0][0],
-                    "email": user_email,
-                    "username": user_username,
-                    "bio": user_bio,
-                    "birthdate": user_birthdate,
+                    "email": user[0][1],
+                    "username": user[0][5],
+                    "bio": user[0][3],
+                    "birthdate": user[0][4],
                     "loginToken": token_result,
                 }
-                return Response(json.dumps(user_info, default=str), mimetype="application/json", status=204)
+                return Response(json.dumps(user_info, default=str), mimetype="application/json", status=201)
             else:
                 return Response("Login User Failed.", mimetype="text/html", status=500)
 
@@ -520,6 +516,6 @@ def follows():
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
-    
-
-    
+###################### FOLLOWERS END POINT ######################
+##@app.route('/api/followers', methods=['GET','DELETE'])
+##def followers():
