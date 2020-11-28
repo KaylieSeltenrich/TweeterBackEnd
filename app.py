@@ -197,6 +197,9 @@ def login():
         cursor = None
         rows = None
         user = None
+        user_username = request.json.get("username")
+        user_birthdate = request.json.get("birthdate")
+        user_bio = request.json.get("bio")
         user_email = request.json.get("email")
         user_password = request.json.get("password")
         token_result = createLoginToken()
@@ -205,10 +208,12 @@ def login():
             cursor = conn.cursor()
             cursor.execute("SELECT userId, email, password FROM user WHERE email=? AND password=?",[user_email,user_password,])
             user = cursor.fetchall()
+        
             if(len(user) == 1):
                 cursor.execute("INSERT INTO user_session(loginToken, userId) VALUES(?,?)", [token_result,user[0][0]])
                 conn.commit()
                 rows = cursor.rowcount
+                
         
         except Exception as error:
             print("Something went wrong: ")
@@ -220,7 +225,15 @@ def login():
                 conn.rollback()
                 conn.close()
             if(rows == 1):
-                return Response(json.dumps(user, default=str), mimetype="application/json", status=204)
+                user_info = {
+                    "userId": user[0][0],
+                    "email": user_email,
+                    "username": user_username,
+                    "bio": user_bio,
+                    "birthdate": user_birthdate,
+                    "loginToken": token_result,
+                }
+                return Response(json.dumps(user_info, default=str), mimetype="application/json", status=204)
             else:
                 return Response("Login User Failed.", mimetype="text/html", status=500)
 
@@ -445,31 +458,35 @@ def follows():
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
     
-    # elif request.method == 'POST':
-    #     conn = None
-    #     cursor = None
-    #     login_token = request.json.get("loginToken")
-    #     rows = None
+    elif request.method == 'POST':
+        conn = None
+        cursor = None
+        login_token = request.json.get("loginToken")
+        follow_id = request.json.get("followId")
+        user_id = None
+        rows = None
 
-    #     try:
-    #         conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
-    #         cursor = conn.cursor()
-    #         cursor.execute("SELECT us.loginToken FROM user_session us INNER JOIN follow ON us.userId=follow.followId WHERE loginToken=?",[login_token,])
-    #         follow = cursor.fetchone()
-    #         cursor.execute("SELECT ",[])
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT u.userId FROM user u INNER JOIN user_session us ON u.userId=us.userId WHERE loginToken=?",[login_token,])
+            user_id = cursor.fetchall()[0][0]
+            cursor.execute("INSERT INTO follow(userId,followId) VALUES(?,?)",[user_id,follow_id,])
+            conn.commit()
+            rows = cursor.rowcount
 
-    #     except Exception as error:
-    #         print("Something went wrong: ")
-    #         print(error)
-    #     finally:
-    #         if(cursor != None):
-    #             cursor.close()
-    #         if(conn != None):
-    #             conn.rollback()
-    #             conn.close()
-    #         if(rows == 1):
-    #             return Response("Followed user succesfully!", mimetype="text/html", status=204)
-    #         else:
-    #             return Response("Something went wrong!", mimetype="text/html", status=500)
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Followed user succesfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
 
     
