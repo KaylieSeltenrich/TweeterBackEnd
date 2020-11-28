@@ -488,5 +488,38 @@ def follows():
                 return Response("Followed user succesfully!", mimetype="text/html", status=204)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
+    
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        login_token = request.json.get("loginToken")
+        follow_id = request.json.get("followId")
+        user_id = None
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT us.userId FROM user_session us WHERE us.loginToken=?",[login_token,])
+            user_id = cursor.fetchall()[0][0]
+            cursor.execute("DELETE FROM follow WHERE followId=? AND userId=?",[follow_id,user_id,])
+            conn.commit()
+            rows = cursor.rowcount
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Deleted follow succesfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+
+    
 
     
