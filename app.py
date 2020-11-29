@@ -300,7 +300,6 @@ def tweets():
                         "content": tweet[1],
                         "createdAt": tweet[2],
                         })
-
                 return Response(json.dumps(tweets_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
@@ -435,7 +434,7 @@ def follows():
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.followId WHERE follow.userId=?", [user_id,])
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.userId WHERE follow.followId=?",[user_id,])
             follows = cursor.fetchall()
             print(follows)
 
@@ -450,7 +449,17 @@ def follows():
                 conn.rollback()
                 conn.close()
             if(follows != None):
-                return Response(json.dumps(follows, default=str), mimetype="application/json", status=200)
+                follow_info = []
+                for follow in follows:
+                    follow_info.append({
+                        "userId": follow[0],
+                        "email": follow[1],
+                        "username": follow[2],
+                        "bio": follow[3],
+                        "birthdate": follow[4],
+                        })
+
+                return Response(json.dumps(follow_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
     
@@ -517,5 +526,32 @@ def follows():
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
 ###################### FOLLOWERS END POINT ######################
-##@app.route('/api/followers', methods=['GET','DELETE'])
-##def followers():
+@app.route('/api/followers', methods=['GET'])
+def followers():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        follows = None
+        user_id = request.args.get("userId")
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.userId WHERE follow.userId=?", [user_id,])
+            follows = cursor.fetchall()
+            print(follows)
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+            
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(follows != None):
+                return Response(json.dumps(follows, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
