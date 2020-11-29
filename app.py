@@ -421,6 +421,10 @@ def tweets():
             else:
                 return Response("Tweet not Deleted!", mimetype="text/html", status=500)
 
+
+###################### TWEET LIKES END POINT ######################
+
+
 ###################### FOLLOWS END POINT ######################
 
 @app.route('/api/follows', methods=['GET','POST','DELETE'])
@@ -533,11 +537,11 @@ def followers():
         cursor = None
         follows = None
         user_id = request.args.get("userId")
-
+        
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.userId WHERE follow.userId=?", [user_id,])
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.followId WHERE follow.userId=?",[user_id,])
             follows = cursor.fetchall()
             print(follows)
 
@@ -552,6 +556,16 @@ def followers():
                 conn.rollback()
                 conn.close()
             if(follows != None):
-                return Response(json.dumps(follows, default=str), mimetype="application/json", status=200)
+                follow_info = []
+                for follow in follows:
+                    follow_info.append({
+                        "userId": follow[0],
+                        "email": follow[1],
+                        "username": follow[2],
+                        "bio": follow[3],
+                        "birthdate": follow[4],
+                        })
+
+                return Response(json.dumps(follow_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
