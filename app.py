@@ -423,7 +423,72 @@ def tweets():
 
 
 ###################### TWEET LIKES END POINT ######################
+@app.route('/api/tweet-likes', methods=['GET','POST','DELETE'])
+def tweetlikes():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        tweet_likes = None
+        tweet_id = request.args.get("tweetId")
 
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT u.username, u.userId FROM user u INNER JOIN tweet_like tl ON u.userId=tl.userId WHERE tl.tweetId=?", [tweet_id,])
+            tweet_likes = cursor.fetchall()
+            print(tweet_likes)
+ 
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(tweet_likes != None):
+                tweetlike_info = []
+                for tweet_like in tweet_likes:
+                    tweetlike_info.append({
+                        "tweetId": tweet_id,
+                        "userId": tweet_like[1],
+                        "username": tweet_like[0],
+                        })
+                return Response(json.dumps(tweetlike_info, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+
+    elif request.method == 'POST':
+        conn = None
+        cursor = None
+        tweet_id = request.json.get("tweetId")
+        login_token = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT us.userId FROM user_session us INNER JOIN tweet_like tl ON us.userId=tl.userId WHERE loginToken=?",[login_token,])
+            user = cursor.fetchone()
+            cursor.execute("INSERT INTO tweet_like(tweetId,userId) VALUES (?,?)", [tweet_id,user[0],])
+            conn.commit()
+            rows = cursor.rowcount
+            tweet_id = cursor.lastrowid
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Liked Tweet!", mimetype="text/html", status=201)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
 
 ###################### FOLLOWS END POINT ######################
 
