@@ -489,6 +489,38 @@ def tweetlikes():
                 return Response("Liked Tweet!", mimetype="text/html", status=201)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
+    
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        tweet_id = request.json.get("tweetId")
+        login_token = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT us.userId FROM user_session us INNER JOIN tweet_like tl ON us.userId=tl.userId WHERE loginToken=?",[login_token,])
+            user = cursor.fetchone()
+            cursor.execute("DELETE FROM tweet_like WHERE tweetId=? AND userId=?", [tweet_id,user[0],])
+            conn.commit()
+            rows = cursor.rowcount
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Deleted Tweet!", mimetype="text/html", status=204)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+    
+    
 
 ###################### FOLLOWS END POINT ######################
 
