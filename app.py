@@ -777,7 +777,7 @@ def comments():
                 conn.commit()
                 rows = cursor.rowcount
             else:
-                print("Unable to update comment")
+                print("Unable to update comment.")
 
         except Exception as error:
             print("Something went wrong: ")
@@ -800,4 +800,39 @@ def comments():
                 return Response(json.dumps(comment_information, default=str), mimetype="application/json", status=200)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
+
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        login_token = request.json.get("loginToken")
+        comment_id = request.json.get("commentId")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT u.userId, u.username FROM user u INNER JOIN user_session us ON us.userId=u.userId WHERE loginToken=?", [login_token,])
+            user = cursor.fetchall()[0][0]
+            cursor.execute("SELECT userId FROM comment WHERE commentId=?", [comment_id,])
+            comment_owner = cursor.fetchall()[0][0]
+            if(user == comment_owner):
+                cursor.execute("DELETE FROM comment WHERE commentId=?", [comment_id,])
+                conn.commit()
+                rows = cursor.rowcount
+            else:
+                print("Unable to delete comment.")
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Comment Deleted Succesfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Comment not Deleted!", mimetype="text/html", status=500)
     
