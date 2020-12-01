@@ -84,6 +84,7 @@ def users():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -141,6 +142,7 @@ def users():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if cursor != None:
                 cursor.close()
@@ -179,6 +181,7 @@ def users():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if cursor != None:
                 cursor.close()
@@ -202,6 +205,7 @@ def login():
         user_email = request.json.get("email")
         user_password = request.json.get("password")
         token_result = createLoginToken()
+        
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
@@ -216,6 +220,7 @@ def login():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if cursor != None:
                 cursor.close()
@@ -241,6 +246,7 @@ def login():
         rows = None
         user = None
         user_loginToken = request.json.get("loginToken")
+        
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
@@ -252,6 +258,7 @@ def login():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if cursor != None:
                 cursor.close()
@@ -287,6 +294,7 @@ def tweets():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -328,6 +336,7 @@ def tweets():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -365,13 +374,13 @@ def tweets():
                 cursor.execute("UPDATE tweet SET content=? WHERE tweetId=?", [tweet_content,tweet_id,])
                 conn.commit()
                 rows = cursor.rowcount
-                tweetId = cursor.lastrowid
             else:
                 print("Unable to update tweet")
 
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -413,6 +422,7 @@ def tweets():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -444,6 +454,7 @@ def tweetlikes():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -482,6 +493,7 @@ def tweetlikes():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -512,6 +524,7 @@ def tweetlikes():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -519,12 +532,10 @@ def tweetlikes():
                 conn.rollback()
                 conn.close()
             if(rows == 1):
-                return Response("Deleted Tweet!", mimetype="text/html", status=204)
+                return Response("Tweet like removed successfully!", mimetype="text/html", status=204)
             else:
                 return Response("Something went wrong!", mimetype="text/html", status=500)
     
-    
-
 ###################### FOLLOWS END POINT ######################
 
 @app.route('/api/follows', methods=['GET','POST','DELETE'])
@@ -587,6 +598,7 @@ def follows():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -618,6 +630,7 @@ def follows():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -672,6 +685,7 @@ def followers():
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
 ###################### COMMENTS END POINT ######################
+
 @app.route('/api/comments', methods=['GET','POST','PATCH','DELETE'])
 def comments():
     if request.method == 'GET':
@@ -693,6 +707,7 @@ def comments():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -736,6 +751,7 @@ def comments():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -782,6 +798,7 @@ def comments():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -825,6 +842,7 @@ def comments():
         except Exception as error:
             print("Something went wrong: ")
             print(error)
+        
         finally:
             if(cursor != None):
                 cursor.close()
@@ -835,4 +853,110 @@ def comments():
                 return Response("Comment Deleted Succesfully!", mimetype="text/html", status=204)
             else:
                 return Response("Comment not Deleted!", mimetype="text/html", status=500)
-    
+
+###################### COMMENT LIKES END POINT ######################
+
+@app.route('/api/comment-likes', methods=['GET','POST','DELETE'])
+def commentlikes():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        comment_likes = None
+        comment_id = request.args.get("commentId")
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT u.username, u.userId FROM user u INNER JOIN comment_like cl ON u.userId=cl.userId WHERE cl.commentId=?", [comment_id,])
+            comment_likes = cursor.fetchall()
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(comment_likes != None):
+                commentlike_info = []
+                for comment_like in comment_likes:
+                    commentlike_info.append({
+                        "commentId": comment_id,
+                        "userId": comment_like[1],
+                        "username": comment_like[0],
+                        })
+                return Response(json.dumps(commentlike_info, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+
+    elif request.method == 'POST':
+        conn = None
+        cursor = None
+        comment_id = request.json.get("commentId")
+        login_token = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT userId from user_session WHERE loginToken=?", [login_token,])
+            user = cursor.fetchone()
+            cursor.execute("SELECT username FROM user WHERE userId=?", [user[0],])
+            username = cursor.fetchone()
+            cursor.execute("INSERT INTO comment_like(commentId,userId) VALUES (?,?)", [comment_id,user[0],])
+            conn.commit()
+            rows = cursor.rowcount
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                commentlike_information = {
+                    "commentId": comment_id,
+                    "userId": user[0],
+                    "username": username[0],
+                }
+                return Response(json.dumps(commentlike_information, default=str), mimetype="application/json", status=201)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+
+    elif request.method == 'DELETE':
+        conn = None
+        cursor = None
+        comment_id = request.json.get("commentId")
+        login_token = request.json.get("loginToken")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            cursor.execute("SELECT us.userId FROM user_session us INNER JOIN comment_like cl ON us.userId=cl.userId WHERE loginToken=?",[login_token,])
+            user = cursor.fetchone()
+            cursor.execute("DELETE FROM comment_like WHERE commentId=? AND userId=?", [comment_id,user[0],])
+            conn.commit()
+            rows = cursor.rowcount
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                return Response("Comment like removed successfully!", mimetype="text/html", status=204)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
