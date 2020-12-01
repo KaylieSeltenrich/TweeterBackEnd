@@ -16,6 +16,7 @@ app = Flask(__name__)
 CORS(app)
 
 ###################### USERS END POINT ######################
+
 @app.route('/api/users', methods=['GET','POST','PATCH','DELETE'])
 def users():
     if request.method == 'GET':
@@ -190,6 +191,7 @@ def users():
                 return Response("Deleting User Failed", mimetype="text/html", status=500)
 
 ###################### LOGIN END POINT ######################
+
 @app.route('/api/login', methods=['POST','DELETE'])
 def login():
     if request.method == 'POST':
@@ -262,6 +264,7 @@ def login():
                 return Response("Logging Out Failed.", mimetype="text/html", status=500)
 
 ###################### TWEETS END POINT ######################
+
 @app.route('/api/tweets', methods=['GET','POST','PATCH','DELETE'])
 def tweets():
     if request.method == 'GET':
@@ -421,8 +424,8 @@ def tweets():
             else:
                 return Response("Tweet not Deleted!", mimetype="text/html", status=500)
 
-
 ###################### TWEET LIKES END POINT ######################
+
 @app.route('/api/tweet-likes', methods=['GET','POST','DELETE'])
 def tweetlikes():
     if request.method == 'GET':
@@ -627,6 +630,7 @@ def follows():
                 return Response("Something went wrong!", mimetype="text/html", status=500)
 
 ###################### FOLLOWERS END POINT ######################
+
 @app.route('/api/followers', methods=['GET'])
 def followers():
     if request.method == 'GET':
@@ -666,3 +670,134 @@ def followers():
                 return Response(json.dumps(follow_info, default=str), mimetype="application/json", status=200)
             else: 
                 return Response("Something went wrong!", mimetype="text/html", status=500)
+
+###################### COMMENTS END POINT ######################
+@app.route('/api/comments', methods=['GET','POST','PATCH','DELETE'])
+def comments():
+    if request.method == 'GET':
+        conn = None
+        cursor = None
+        tweet_id = request.args.get("tweetId")
+        comments = None
+    
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor()
+            if(tweet_id == None):
+                cursor.execute("SELECT user.username, c.commentId, c.content, c.createdAt, c.tweetId, c.userId FROM user INNER JOIN comment c ON user.userId=c.userId")
+                comments = cursor.fetchall()
+            else: 
+                cursor.execute("SELECT user.username, c.commentId, c.content, c.createdAt, c.tweetId, c.userId FROM user INNER JOIN comment c ON user.userId=c.userId WHERE c.tweetId=?", [tweet_id,])
+                comments = cursor.fetchall()
+           
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(comments != None):
+                comments_info = []
+                for comment in comments:
+                    comments_info.append({
+                        "commentId": comment[1],
+                        "tweetId": comment[4],
+                        "userId": comment[5],
+                        "username": comment[0],
+                        "content": comment[2],
+                        "createdAt": comment[3]
+                        })
+                return Response(json.dumps(comments_info, default=str), mimetype="application/json", status=200)
+            else: 
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+                
+    elif request.method == 'POST':
+        conn = None
+        cursor = None
+        comment_content = request.json.get("content")
+        tweet_id = request.json.get("tweetId")
+        login_token = request.json.get("loginToken")
+        createdAt = datetime.datetime.now().strftime("%Y-%m-%d")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT us.userId, u.username FROM user_session us INNER JOIN user u ON us.userId=u.userId WHERE loginToken=?",[login_token,])
+            user = cursor.fetchone()
+            cursor.execute("INSERT INTO comment(content,tweetId,userId) VALUES (?,?,?)", [comment_content,tweet_id,user[0]])
+            conn.commit()
+            rows = cursor.rowcount
+            commentId = cursor.lastrowid
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                comment_information = {
+                    "commentId": commentId,
+                    "tweetId": tweet_id,
+                    "userId": user[0],
+                    "username": user[1],
+                    "content": comment_content,
+                    "createdAt": createdAt,
+                }
+                return Response(json.dumps(comment_information, default=str), mimetype="application/json", status=201)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+    
+    elif request.method == 'PATCH':
+        conn = None
+        cursor = None
+        comment_content = request.json.get("content")
+        login_token = request.json.get("loginToken")
+        comment_id = request.json.get("commentId")
+        rows = None
+
+        try:
+            conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
+            cursor = conn.cursor() 
+            cursor.execute("SELECT u.userId, u.username FROM user u INNER JOIN user_session us ON us.userId=u.userId WHERE loginToken=?", [login_token,])
+            user = cursor.fetchall()[0][0]
+            cursor.execute("SELECT userId FROM comment WHERE commentId=?", [comment_id,])
+            comment_owner = cursor.fetchall()[0][0]
+            if(user == comment_owner):
+                cursor.execute("SELECT u.username, c.tweetId, c.userId, c.createdAt FROM user u INNER JOIN comment c ON u.userId=c.userId")
+                owner = cursor.fetchone()
+                cursor.execute("UPDATE comment SET content=? WHERE commentId=?", [comment_content,comment_id,])
+                conn.commit()
+                rows = cursor.rowcount
+            else:
+                print("Unable to update comment")
+
+        except Exception as error:
+            print("Something went wrong: ")
+            print(error)
+        finally:
+            if(cursor != None):
+                cursor.close()
+            if(conn != None):
+                conn.rollback()
+                conn.close()
+            if(rows == 1):
+                comment_information = {
+                    "commentId": comment_id,
+                    "tweetId": owner[1],
+                    "userId": owner[2],
+                    "username": owner[0],
+                    "content": comment_content,
+                    "createdAt": owner[3] ,
+                }
+                return Response(json.dumps(comment_information, default=str), mimetype="application/json", status=200)
+            else:
+                return Response("Something went wrong!", mimetype="text/html", status=500)
+    
