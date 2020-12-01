@@ -447,9 +447,12 @@ def tweetlikes():
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT u.username, u.userId FROM user u INNER JOIN tweet_like tl ON u.userId=tl.userId WHERE tl.tweetId=?", [tweet_id,])
-            tweet_likes = cursor.fetchall()
-            print(tweet_likes)
+            if(tweet_id == None):
+                cursor.execute("SELECT u.username, u.userId, tl.tweetId FROM user u INNER JOIN tweet_like tl ON u.userId=tl.userId")
+                tweet_likes = cursor.fetchall()
+            else:
+                cursor.execute("SELECT u.username, u.userId, tl.tweetId FROM user u INNER JOIN tweet_like tl ON u.userId=tl.userId WHERE tl.tweetId=?", [tweet_id,])
+                tweet_likes = cursor.fetchall()
  
         except Exception as error:
             print("Something went wrong: ")
@@ -465,7 +468,7 @@ def tweetlikes():
                 tweetlike_info = []
                 for tweet_like in tweet_likes:
                     tweetlike_info.append({
-                        "tweetId": tweet_id,
+                        "tweetId": tweet_like[2],
                         "userId": tweet_like[1],
                         "username": tweet_like[0],
                         })
@@ -867,8 +870,12 @@ def commentlikes():
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT u.username, u.userId FROM user u INNER JOIN comment_like cl ON u.userId=cl.userId WHERE cl.commentId=?", [comment_id,])
-            comment_likes = cursor.fetchall()
+            if(comment_id == None):
+                cursor.execute("SELECT u.username, u.userId, cl.commentId FROM user u INNER JOIN comment_like cl ON u.userId=cl.userId")
+                comment_likes = cursor.fetchall()
+            else:
+                cursor.execute("SELECT u.username, u.userId, cl.commentId FROM user u INNER JOIN comment_like cl ON u.userId=cl.userId WHERE cl.commentId=?", [comment_id,])
+                comment_likes = cursor.fetchall()
 
         except Exception as error:
             print("Something went wrong: ")
@@ -884,7 +891,7 @@ def commentlikes():
                 commentlike_info = []
                 for comment_like in comment_likes:
                     commentlike_info.append({
-                        "commentId": comment_id,
+                        "commentId": comment_like[2],
                         "userId": comment_like[1],
                         "username": comment_like[0],
                         })
