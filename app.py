@@ -485,13 +485,14 @@ def tweetlikes():
 
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
-            cursor = conn.cursor() 
-            cursor.execute("SELECT us.userId FROM user_session us INNER JOIN tweet_like tl ON us.userId=tl.userId WHERE loginToken=?",[login_token,])
+            cursor = conn.cursor()
+            cursor.execute("SELECT userId from user_session WHERE loginToken=?", [login_token,])
             user = cursor.fetchone()
+            cursor.execute("SELECT username FROM user WHERE userId=?", [user[0],])
+            username = cursor.fetchone()
             cursor.execute("INSERT INTO tweet_like(tweetId,userId) VALUES (?,?)", [tweet_id,user[0],])
             conn.commit()
             rows = cursor.rowcount
-            tweet_id = cursor.lastrowid
 
         except Exception as error:
             print("Something went wrong: ")
