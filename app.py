@@ -553,7 +553,7 @@ def follows():
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.userId WHERE follow.followId=?",[user_id,])
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.followId WHERE follow.userId=?",[user_id,])
             follows = cursor.fetchall()
             print(follows)
 
@@ -595,9 +595,10 @@ def follows():
             cursor = conn.cursor()
             cursor.execute("SELECT u.userId FROM user u INNER JOIN user_session us ON u.userId=us.userId WHERE loginToken=?",[login_token,])
             user_id = cursor.fetchall()[0][0]
-            cursor.execute("INSERT INTO follow(userId,followId) VALUES(?,?)",[user_id,follow_id,])
-            conn.commit()
-            rows = cursor.rowcount
+            if(user_id != follow_id):
+                cursor.execute("INSERT INTO follow(userId,followId) VALUES(?,?)",[user_id,follow_id,])
+                conn.commit()
+                rows = cursor.rowcount
 
         except Exception as error:
             print("Something went wrong: ")
@@ -659,7 +660,7 @@ def followers():
         try:
             conn = mariadb.connect(host=dbcreds.host, password=dbcreds.password, user=dbcreds.user, port=dbcreds.port, database=dbcreds.database)
             cursor = conn.cursor()
-            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.followId WHERE follow.userId=?",[user_id,])
+            cursor.execute("SELECT user.userId, user.email, user.username, user.bio, user.birthdate FROM user INNER JOIN follow ON user.userId=follow.userId WHERE follow.followId=?",[user_id,])
             follows = cursor.fetchall()
             print(follows)
 
