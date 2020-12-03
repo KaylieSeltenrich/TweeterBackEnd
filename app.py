@@ -5,7 +5,6 @@ import dbcreds
 import random
 import string
 import datetime
-from flask_cors import CORS
 
 def createLoginToken():
     letters = string.ascii_letters
@@ -13,7 +12,6 @@ def createLoginToken():
     return token_result
 
 app = Flask(__name__)
-CORS(app)
 
 ###################### USERS END POINT ######################
 
@@ -34,10 +32,26 @@ def users():
             else: 
                 cursor.execute("SELECT * FROM user WHERE userId=?",[user_id,])
                 users = cursor.fetchall()
-           
+
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
+        
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
         except Exception as error:
-            print("Something went wrong (this is lazy): ")
+            print("Something else went wrong: ")
             print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -81,10 +95,26 @@ def users():
                 conn.commit()
                 rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
+    
         finally:
             if(cursor != None):
                 cursor.close()
@@ -138,11 +168,25 @@ def users():
             cursor.execute("SELECT * FROM user WHERE userId=?", [user[0],])
             user = cursor.fetchone()
 
-           
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if cursor != None:
                 cursor.close()
@@ -178,10 +222,25 @@ def users():
             conn.commit()
             rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if cursor != None:
                 cursor.close()
@@ -217,10 +276,25 @@ def login():
                 conn.commit()
                 rows = cursor.rowcount
                 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if cursor != None:
                 cursor.close()
@@ -255,10 +329,25 @@ def login():
             rows = cursor.rowcount
             print(rows)
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if cursor != None:
                 cursor.close()
@@ -291,10 +380,25 @@ def tweets():
                 cursor.execute("SELECT user.username, t.content, t.createdAt, t.tweetId, t.userId FROM user INNER JOIN tweet t ON user.userId=t.userId WHERE user.userId=?", [user_id,])
                 tweets = cursor.fetchall()
            
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -333,10 +437,25 @@ def tweets():
             rows = cursor.rowcount
             tweetId = cursor.lastrowid
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -377,10 +496,25 @@ def tweets():
             else:
                 print("Unable to update tweet")
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -419,10 +553,25 @@ def tweets():
             else:
                 print("Unable to delete tweet.")
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -454,10 +603,25 @@ def tweetlikes():
                 cursor.execute("SELECT u.username, u.userId, tl.tweetId FROM user u INNER JOIN tweet_like tl ON u.userId=tl.userId WHERE tl.tweetId=?", [tweet_id,])
                 tweet_likes = cursor.fetchall()
  
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -494,8 +658,23 @@ def tweetlikes():
             conn.commit()
             rows = cursor.rowcount
 
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
+        
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
         except Exception as error:
-            print("Something went wrong: ")
+            print("Something else went wrong: ")
             print(error)
 
         finally:
@@ -525,10 +704,25 @@ def tweetlikes():
             conn.commit()
             rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -557,10 +751,25 @@ def follows():
             follows = cursor.fetchall()
             print(follows)
 
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
+        
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
         except Exception as error:
-            print("Something went wrong: ")
+            print("Something else went wrong: ")
             print(error)
-            
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -600,10 +809,25 @@ def follows():
                 conn.commit()
                 rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -632,10 +856,25 @@ def follows():
             conn.commit()
             rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -664,10 +903,25 @@ def followers():
             follows = cursor.fetchall()
             print(follows)
 
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
+        
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
         except Exception as error:
-            print("Something went wrong: ")
+            print("Something else went wrong: ")
             print(error)
-            
+   
         finally:
             if(cursor != None):
                 cursor.close()
@@ -709,10 +963,25 @@ def comments():
                 cursor.execute("SELECT user.username, c.commentId, c.content, c.createdAt, c.tweetId, c.userId FROM user INNER JOIN comment c ON user.userId=c.userId WHERE c.tweetId=?", [tweet_id,])
                 comments = cursor.fetchall()
            
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -753,10 +1022,25 @@ def comments():
             rows = cursor.rowcount
             commentId = cursor.lastrowid
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -800,10 +1084,25 @@ def comments():
             else:
                 print("Unable to update comment.")
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -844,10 +1143,25 @@ def comments():
             else:
                 print("Unable to delete comment.")
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -879,10 +1193,25 @@ def commentlikes():
                 cursor.execute("SELECT u.username, u.userId, cl.commentId FROM user u INNER JOIN comment_like cl ON u.userId=cl.userId WHERE cl.commentId=?", [comment_id,])
                 comment_likes = cursor.fetchall()
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -919,10 +1248,25 @@ def commentlikes():
             conn.commit()
             rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
@@ -955,10 +1299,25 @@ def commentlikes():
             conn.commit()
             rows = cursor.rowcount
 
-        except Exception as error:
-            print("Something went wrong: ")
-            print(error)
+        except mariadb.ProgrammingError:
+            print("Programming Error has occurred. Please check code!")
         
+        except mariadb.IntegrityError:
+            print("Error with DB integrity!")
+        
+        except mariadb.OperationalError:
+            print("Connection issue with database")
+        
+        except mariadb.DataError:
+            print("Error with data!")
+        
+        except mariadb.DatabaseError:
+            print("Error with database!")
+
+        except Exception as error:
+            print("Something else went wrong: ")
+            print(error)
+
         finally:
             if(cursor != None):
                 cursor.close()
