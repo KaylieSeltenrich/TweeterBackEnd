@@ -5,6 +5,7 @@ import dbcreds
 import random
 import string
 import datetime
+from flask_cors import CORS
 
 def createLoginToken():
     letters = string.ascii_letters
@@ -12,6 +13,7 @@ def createLoginToken():
     return token_result
 
 app = Flask(__name__)
+CORS(app,resources={r"/api/*":{"origins":["www.squawker.ml","squawker.ml"]}})
 
 ###################### USERS END POINT ######################
 
